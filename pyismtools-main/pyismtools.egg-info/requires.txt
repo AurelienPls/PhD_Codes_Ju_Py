@@ -1,0 +1,7 @@
+tqdm>=4.64.1
+numpy>=1.23.3
+scipy>=1.9.1
+matplotlib>=3.6.0
+pymc>=5.13.1
+pytensor>=2.20.0
+arviz>=0.18.0

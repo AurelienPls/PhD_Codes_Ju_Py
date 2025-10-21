@@ -1,0 +1,208 @@
+
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{geometry}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{fancyvrb} % Pour le code en environnement Verbatim
+\usepackage{xcolor}
+
+\geometry{a4paper, margin=1in}
+
+% Définition d'un style pour le code dans le tableau
+\newcommand{\code}[1]{\texttt{\textcolor{blue}{#1}}}
+
+\title{\textbf{Documentation des Fonctions d'Analyse des Taux de Collision} \vspace{0.5em}}
+\author{Généré par IA (basé sur le script $\texttt{auxtools.py}$)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+Ce document fournit une référence claire et structurée des fonctions Python incluses dans le script d'analyse des taux de collision. Chaque fonction est décrite en français avec ses paramètres d'entrée, son type de retour et son rôle principal dans la préparation ou la visualisation des données de niveaux quantiques.
+\end{abstract}
+
+\vspace{1em}
+
+\tableofcontents
+\newpage
+
+\section{Conventions Utilisées}
+
+\begin{itemize}
+    \item Les noms de fonctions, de DataFrames et de colonnes sont affichés en \code{bleu} (\texttt{code}).
+    \item Les DataFrames Pandas sont désignés par $\text{pd.DataFrame}$.
+    \item Les indices quantiques utilisés sont : $v$ (vibrationnel) et $J$ (rotationnel).
+\end{itemize}
+
+\section{Fonctions de Préparation des Données}
+
+Ces fonctions sont essentielles pour enrichir les données de collision brutes avec des informations sur les niveaux quantiques et des valeurs effectives.
+
+\subsection{\code{merge\_levels\_simple}}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.7\textwidth}|}
+    \caption{Description de la fonction \code{merge\_levels\_simple}} \\
+    \toprule
+    \textbf{Rôle Principal} & Fusionne les données de taux de collision avec les numéros quantiques ($v$, $J$) des niveaux supérieur et inférieur associés, en utilisant les indices numériques de niveau (\code{nu}, \code{nl}). \\
+    \midrule
+    \textbf{Entrée : \code{df\_coll}} & $\text{pd.DataFrame}$ : Données de collision (doit contenir les indices numériques des niveaux, par défaut \code{nu} et \code{nl}). \\
+    \midrule
+    \textbf{Entrée : \code{df\_level\_co}} & $\text{pd.DataFrame}$ : Données détaillées des niveaux (doit contenir \code{n}, \code{v}, \code{J}). \\
+    \midrule
+    \textbf{Entrée : \code{cols}} & $\text{list}$ de $\text{str}$ (Défaut : $\text{['nu', 'nl']}$) : Noms des colonnes d'index de niveau dans \code{df\_coll}. \\
+    \midrule
+    \textbf{Type de Retour} & $\text{pd.DataFrame}$ : DataFrame de collision enrichi avec les colonnes \code{vu}, \code{Ju}, \code{vl} et \code{Jl} (en tant que $\text{int64}$). \\
+    \bottomrule
+\end{longtable}
+
+\subsection{\code{sort\_and\_create\_effective\_values}}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.7\textwidth}|}
+    \caption{Description de la fonction \code{sort\_and\_create\_effective\_values}} \\
+    \toprule
+    \textbf{Rôle Principal} & Trie le DataFrame (par $v$ puis $J$ pour les niveaux supérieur et inférieur) et calcule les valeurs quantiques effectives ($V_{\text{eff}}$) selon la formule :
+    $$V_{\text{eff}} = v + \frac{J}{J_{\text{max}}(v)}$$
+    \\
+    \midrule
+    \textbf{Entrée : \code{df\_merged}} & $\text{pd.DataFrame}$ : Le DataFrame fusionné, contenant les colonnes \code{vu}, \code{Ju}, \code{vl}, et \code{Jl}. \\
+    \midrule
+    \textbf{Type de Retour} & $\text{pd.DataFrame}$ : Le DataFrame trié, enrichi des colonnes \code{V\_eff\_u} et \code{V\_eff\_l}. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{\code{calculate\_v\_eff} (Fonction Auxiliaire)}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.7\textwidth}|}
+    \caption{Description de la fonction \code{calculate\_v\_eff}} \\
+    \toprule
+    \textbf{Rôle Principal} & Fonction utilitaire interne pour calculer la valeur effective $V_{\text{eff}}$ en fusionnant la valeur $J_{\text{max}}$ correspondante. \\
+    \midrule
+    \textbf{Entrée : \code{df}} & $\text{pd.DataFrame}$ : DataFrame contenant les colonnes $v$ et $J$ (ex. \code{vu}, \code{Ju}). \\
+    \midrule
+    \textbf{Entrée : \code{prefix}} & $\text{str}$ : Préfixe du niveau (\code{u} ou \code{l}). \\
+    \midrule
+    \textbf{Entrée : \code{j\_max\_series}} & $\text{pd.Series}$ : Série des $J_{\text{max}}$ indexée par la valeur de $v$. \\
+    \midrule
+    \textbf{Type de Retour} & $\text{pd.DataFrame}$ : Le DataFrame mis à jour avec la colonne $V_{\text{eff}}$ (ex. \code{V\_eff\_u}). \\
+    \bottomrule
+\end{longtable}
+
+\section{Fonctions de Détection des Données Manquantes}
+
+Ces fonctions permettent d'identifier les paires de niveaux pour lesquelles des données de collision sont théoriquement possibles mais non disponibles.
+
+\subsection{\code{get\_missing\_levels\_df}}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.7\textwidth}|}
+    \caption{Description de la fonction \code{get\_missing\_levels\_df}} \\
+    \toprule
+    \textbf{Rôle Principal} & Génère un DataFrame des combinaisons de niveaux ($\text{vu, Ju, vl, Jl}$) qui sont \textbf{manquantes} dans le jeu de données actuel, en se basant sur l'ensemble des niveaux observés. \\
+    \midrule
+    \textbf{Entrée : \code{df\_merged}} & $\text{pd.DataFrame}$ : DataFrame des données existantes. \\
+    \midrule
+    \textbf{Entrée : \code{c\_col}} & $\text{str}$ (Défaut : $\text{'100.0'}$) : Colonne des données de collision utilisée pour identifier les valeurs manquantes ($\text{NaN}$). \\
+    \midrule
+    \textbf{Type de Retour} & $\text{pd.DataFrame}$ : Un DataFrame trié contenant uniquement les colonnes $\text{vu, Ju, vl, Jl}$ des niveaux manquants. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{\code{get\_missing\_levels\_df\_2}}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.7\textwidth}|}
+    \caption{Description de la fonction \code{get\_missing\_levels\_df\_2}} \\
+    \toprule
+    \textbf{Rôle Principal} & Identifie les combinaisons manquantes en appliquant la \textbf{contrainte physique} : le niveau supérieur effectif doit être strictement plus grand que le niveau inférieur effectif ($\mathbf{V_{\text{eff\_u}} > V_{\text{eff\_l}}}$). \\
+    \midrule
+    \textbf{Entrée : \code{df\_merged}} & $\text{pd.DataFrame}$ : DataFrame des données existantes (doit contenir les colonnes $\text{V\_eff}$). \\
+    \midrule
+    \textbf{Entrée : \code{c\_col}} & $\text{str}$ (Défaut : $\text{'100.0'}$) : Colonne des données de collision. \\
+    \midrule
+    \textbf{Type de Retour} & $\text{pd.DataFrame}$ : DataFrame des niveaux manquants *physiquement valides*. Toutes les colonnes de données de collision sont définies à $\text{NaN}$. \\
+    \bottomrule
+\end{longtable}
+
+\section{Fonctions de Visualisation (Plotting)}
+
+Ces fonctions génèrent des graphiques statiques (Matplotlib) ou interactifs (Plotly) pour visualiser les données de collision en fonction des valeurs effectives $V_{\text{eff}}$.
+
+\subsection{\code{plot\_static\_colormap}}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.7\textwidth}|}
+    \caption{Description de la fonction \code{plot\_static\_colormap}} \\
+    \toprule
+    \textbf{Rôle Principal} & Génère un nuage de points \textbf{statique} (\texttt{matplotlib}) de $V_{\text{eff\_u}}$ vs $V_{\text{eff\_l}}$, coloré par une colonne de données spécifiée. \\
+    \midrule
+    \textbf{Entrée : \code{df}} & $\text{pd.DataFrame}$ : Données à tracer. \\
+    \midrule
+    \textbf{Entrée : \code{x\_col, y\_col}} & $\text{str}$ (Défauts : $\text{'V\_eff\_l', 'V\_eff\_u'}$). \\
+    \midrule
+    \textbf{Entrée : \code{c\_col}} & $\text{str}$ (Défaut : $\text{'100.0'}$) : Colonne pour la colormap (couleur des points). \\
+    \midrule
+    \textbf{Entrée : \code{cmap\_name}} & $\text{str}$ (Défaut : $\text{'viridis'}$) : Nom de la colormap Matplotlib. \\
+    \midrule
+    \textbf{Entrée : \code{log\_color\_scale}} & $\text{bool}$ (Défaut : $\text{False}$) : Si \code{True}, utilise une \textbf{échelle de couleur logarithmique} (\code{LogNorm}). \\
+    \midrule
+    \textbf{Type de Retour} & $\text{None}$ : Affiche le graphique. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{\code{plot\_interactive\_plotly}}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.7\textwidth}|}
+    \caption{Description de la fonction \code{plot\_interactive\_plotly}} \\
+    \toprule
+    \textbf{Rôle Principal} & Génère un nuage de points \textbf{interactif} (\texttt{Plotly}) de $V_{\text{eff\_u}}$ vs $V_{\text{eff\_l}}$. Les informations détaillées (\code{vu, Ju, vl, Jl}) sont affichées au survol de la souris. \\
+    \midrule
+    \textbf{Entrée : \code{df}} & $\text{pd.DataFrame}$ : Données à tracer. \\
+    \midrule
+    \textbf{Entrée : \code{x\_col, y\_col}} & $\text{str}$ (Défauts : $\text{'V\_eff\_l', 'V\_eff\_u'}$). \\
+    \midrule
+    \textbf{Entrée : \code{c\_col}} & $\text{str}$ (Défaut : $\text{'100.0'}$) : Colonne pour la colormap. \\
+    \midrule
+    \textbf{Type de Retour} & $\text{None}$ : Affiche le graphique interactif. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{\code{plot\_interactive\_with\_missing}}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.7\textwidth}|}
+    \caption{Description de la fonction \code{plot\_interactive\_with\_missing}} \\
+    \toprule
+    \textbf{Rôle Principal} & Combine sur un même graphique Plotly les \textbf{données existantes} (avec colormap) et les \textbf{niveaux manquants possibles} (en gris transparent) pour visualiser l'exhaustivité de la matrice. \\
+    \midrule
+    \textbf{Entrée : \code{df\_merged}} & $\text{pd.DataFrame}$ : DataFrame des données existantes. \\
+    \midrule
+    \textbf{Entrée : \code{x\_col, y\_col, c\_col}} & $\text{str}$ (Défauts : $\text{'V\_eff\_l', 'V\_eff\_u', '100.0'}$). \\
+    \midrule
+    \textbf{Type de Retour} & $\text{None}$ : Affiche le graphique interactif combiné. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{\code{plot\_interactive\_combined}}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.2\textwidth}|>{\raggedright\arraybackslash}p{0.7\textwidth}|}
+    \caption{Description de la fonction \code{plot\_interactive\_combined}} \\
+    \toprule
+    \textbf{Rôle Principal} & Génère un graphique Plotly interactif en superposant les données existantes (colorées) et les niveaux manquants (en noir transparent), en utilisant des DataFrames distincts pour les deux ensembles de points. \\
+    \midrule
+    \textbf{Entrée : \code{df\_merged}} & $\text{pd.DataFrame}$ : Données existantes (pour la couleur). \\
+    \midrule
+    \textbf{Entrée : \code{df\_missing}} & $\text{pd.DataFrame}$ : Données des niveaux manquants (généralement issues de \code{get\_missing\_levels\_df\_2}). \\
+    \midrule
+    \textbf{Entrée : \code{x\_col, y\_col, c\_col}} & $\text{str}$ (Défauts : $\text{'V\_eff\_l', 'V\_eff\_u', '100.0'}$). \\
+    \midrule
+    \textbf{Type de Retour} & $\text{None}$ : Affiche le graphique interactif combiné. \\
+    \bottomrule
+\end{longtable}
+
+\end{document}
+```

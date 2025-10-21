@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: pyismtools
+Version: 0.4
+Summary: Python package to perfom model/observation comparison with Meudon PDR models
+Home-page: https://gitlab.obspm.fr/ism/pyismtools
+Author: Emeric Bron
+Author-email: emeric.bron@obspm.fr
+License: ?
+Classifier: Development Status :: In progress
+Classifier: Intended Audience :: Meudon PDR team
+Requires-Python: >=3.10
+Requires-Dist: tqdm>=4.64.1
+Requires-Dist: numpy>=1.23.3
+Requires-Dist: scipy>=1.9.1
+Requires-Dist: matplotlib>=3.6.0
+Requires-Dist: pymc>=5.13.1
+Requires-Dist: pytensor>=2.20.0
+Requires-Dist: arviz>=0.18.0

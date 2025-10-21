@@ -1,0 +1,14 @@
+\babel@toc {french}{}\relax 
+\contentsline {section}{\numberline {1}Conventions Utilisées}{2}{section.1}%
+\contentsline {section}{\numberline {2}Fonctions de Préparation des Données}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}\texttt {\textcolor {blue}{merge\_levels\_simple}}}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}\texttt {\textcolor {blue}{sort\_and\_create\_effective\_values}}}{2}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}\texttt {\textcolor {blue}{calculate\_v\_eff}} (Fonction Auxiliaire)}{2}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Fonctions de Détection des Données Manquantes}{3}{section.3}%
+\contentsline {subsection}{\numberline {3.1}\texttt {\textcolor {blue}{get\_missing\_levels\_df}}}{3}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}\texttt {\textcolor {blue}{get\_missing\_levels\_df\_2}}}{3}{subsection.3.2}%
+\contentsline {section}{\numberline {4}Fonctions de Visualisation (Plotting)}{3}{section.4}%
+\contentsline {subsection}{\numberline {4.1}\texttt {\textcolor {blue}{plot\_static\_colormap}}}{3}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}\texttt {\textcolor {blue}{plot\_interactive\_plotly}}}{4}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}\texttt {\textcolor {blue}{plot\_interactive\_with\_missing}}}{4}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}\texttt {\textcolor {blue}{plot\_interactive\_combined}}}{4}{subsection.4.4}%
