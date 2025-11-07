@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import os
 import plotly.express as px
+from matplotlib.colors import Normalize, LogNorm
 
 ########READING HELPERS########
 
@@ -134,27 +135,82 @@ def read_lines_df(data_path, molecule="h2"):
     return df
 
 
-def read_collision_to_df( path, name: str) -> pd.DataFrame:
+def read_collision_to_df(path, name: str) -> pd.DataFrame:
+    """
+    Lit un fichier .dat de taux de collision et stocke les données dans un DataFrame.
+
+    Args:
+        file_path (str): Le chemin complet vers le fichier .dat.
+        molecule_name (str): Le nom de la molécule à prendre en compte (actuellement non utilisé
+                             dans cette version car le fichier d'exemple ne contient pas
+                             d'information sur la molécule par ligne de données,
+                             mais peut être implémenté si la structure du fichier évolue).
+
+    Returns:
+        pd.DataFrame: Un DataFrame contenant les taux de collision.
+                      Les premières colonnes sont des entiers (NUM, UP, LOW)
+                      et les colonnes de taux de collision sont des floats,
+                      nommées 'TEMP_PDR' (par exemple, '2.0K_PDR').
+                      Renvoie un DataFrame vide si le fichier est introuvable ou si les données ne peuvent pas être lues.
+    """
+    #rootbase="/Users/aurelien/Desktop/Stage_M2/PDR/1.7/data/Collisions/"
     filename = f"coll_{name}.dat"
     file = path + filename
-
+    
     collision_temperatures = []
     data_lines = []
     start_data_reading = False
 
-    collision_rate_columns = [f"{int(temp) if temp == int(temp) else temp}K_PDR" for temp in collision_temperatures]
+    try:
+        with open(file, 'r') as f:
+            for line in f:
+                line = line.strip()
+
+                # Extraire les températures de collision
+                if line.startswith('!COLLISION TEMPERATURES'):
+                    # La ligne suivante contient les températures
+                    line = next(f).strip()
+                    # Utiliser re.findall pour capturer tous les nombres flottants dans la ligne
+                    temperatures_str = re.findall(r'\d+\.?\d*', line)
+                    collision_temperatures = [float(temp) for temp in temperatures_str]
+
+                # Marquer le début des données
+                if line.startswith('!NUM'):
+                    start_data_reading = True
+                    continue # Ne pas traiter cette ligne comme une ligne de données
+
+                if start_data_reading and line:
+                    data_lines.append(line)
+
+    except FileNotFoundError:
+        print(f"Erreur : Le fichier '{file}' n'a pas été trouvé.")
+        return pd.DataFrame()
+
+
+    # Créer les noms de colonnes pour les taux de collision
+    collision_rate_columns = [f"{int(temp) if temp == int(temp) else temp}Ke" for temp in collision_temperatures]
+
+    # Définir les noms des colonnes initiales
     initial_columns = ['NUM', 'UP', 'LOW']
+
+    # Combiner tous les noms de colonnes
     all_columns = initial_columns + collision_rate_columns
+
+    # Traiter les lignes de données et créer le DataFrame
     df_data = []
     for line in data_lines:
+        # Diviser la ligne en utilisant les espaces comme délimiteurs
         parts = line.split()
-        if len(parts) >= len(all_columns): 
+        if len(parts) >= len(all_columns): # S'assurer qu'il y a suffisamment de données
+            # Les 3 premières parties sont des entiers
             num_up_low = [int(p) for p in parts[:3]]
+            # Les parties restantes sont des taux de collision (floats)
             rates = [float(p) for p in parts[3:3+len(collision_rate_columns)]]
             df_data.append(num_up_low + rates)
-    df = pd.DataFrame(df_data, columns=all_columns)
-    return df
 
+    df = pd.DataFrame(df_data, columns=all_columns)
+
+    return df
 
 
 
@@ -310,7 +366,7 @@ def abs_rel_error(df1, df2, key_cols, value_cols):
     merged = pd.merge(df1, df2, on=key_cols, how='inner', suffixes=('_1', '_2'))
     out = merged[key_cols].copy()
     for col in value_cols:
-        a, b = merged[f'{col}Ke_1'], merged[f'{col}Ke_2']
+        a, b = merged[f'{col}_1'], merged[f'{col}_2']
         err = np.where(a != 0, np.abs(a-b)/np.abs(a), 0)
         out[f'{col}_err'] = np.nan_to_num(err, nan=0, posinf=0, neginf=0)
     return out
@@ -371,6 +427,73 @@ def plot_interactive(df, x_col='V_eff_l', y_col='V_eff_u', c_col='100.0', log_co
     fig = px.scatter(df, x=x_col, y=y_col, color=color_data, hover_data=hover_cols, title=title, labels={"color": c_label})
     fig.update_traces(marker=dict(size=8, opacity=0.8))
     fig.show()
+
+def plot_static_colormap(df: pd.DataFrame, 
+                         x_col: str = 'V_eff_l', 
+                         y_col: str = 'V_eff_u', 
+                         c_col: str = '100.0', 
+                         cmap_name: str = 'viridis',
+                         log_color_scale: bool = False,
+                         title="Titre") -> None: # Added new argument
+    """
+    Generates a static scatter plot of V_eff_u vs V_eff_l with a colormap 
+    based on a specified column (normalized, optionally logarithmic).
+
+    Args:
+        df: The input DataFrame.
+        x_col: Name of the column for the x-axis (default: 'V_eff_l').
+        y_col: Name of the column for the y-axis (default: 'V_eff_u').
+        c_col: Name of the column for the colormap data (default: '100.0').
+        cmap_name: Name of the matplotlib colormap to use (default: 'viridis').
+        log_color_scale: If True, uses a logarithmic scale for the colormap (default: False).
+    """
+    # 1. Normalize the color data (c_col)
+    c_data = df[c_col].values
+    
+    # Determine the normalization based on the log_color_scale argument
+    if log_color_scale:
+        # Check that all values are positive for the log scale
+        if np.min(c_data) <= 0:
+            print("Warning: Cannot use logarithmic color scale. Data must be strictly positive.")
+            # Fallback to linear scale if log scale is requested but data isn't suitable
+            norm = Normalize(vmin=np.min(c_data), vmax=np.max(c_data))
+        else:
+            norm = LogNorm(vmin=np.min(c_data), vmax=np.max(c_data))
+    else:
+        norm = Normalize(vmin=np.min(c_data), vmax=np.max(c_data))
+        
+    # 2. Create the plot
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    # Scatter plot with color mapping
+    scatter = ax.scatter(
+        df[x_col], 
+        df[y_col], 
+        c=c_data, 
+        cmap=cmap_name, 
+        norm=norm, # Use the chosen normalization
+        s=20, # Marker size
+        alpha=0.8 # Transparency
+    )
+    
+    # 3. Set labels and title
+    ax.set_xlabel(x_col)
+    ax.set_ylabel(y_col)
+    ax.set_title(title)
+    
+    # 4. Add color bar
+    cbar = fig.colorbar(scatter, ax=ax)
+    
+    # Update color bar label based on normalization
+    label_suffix = " (log scale)" if log_color_scale and isinstance(norm, LogNorm) else " (normalized)"
+    cbar.set_label(f'Collision rate at {c_col}K{label_suffix}')
+    
+    
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.tight_layout()
+    plt.show()
+    
+
 
 def prolong_curve(x, y, x_new, method='flat', x_fit=1500):
     """Extrapolate y for new x, using last region's trend."""
