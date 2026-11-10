@@ -1,0 +1,17 @@
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Checkpoints & caches
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# macOS & IDEs
+.DS_Store
+.vscode/
+.idea/
+
+# Fichiers volumineux ou temporaires
+*.log
+*.tmp
